@@ -17,3 +17,19 @@
 .shiftFbDockWrapper {
   right: 459px !important;
 }
+
+.followupSidebar {
+  z-index: 9999;
+  position: relative;
+  top: 0;
+  right: 0;
+}
+
+.followupSidebarContainer {
+  box-shadow: 1px 0 0 #f0f0f2 inset;
+  border-left-color: #ccc;
+  border-left: 1px solid rgba(0, 0, 0, .4);
+  position: fixed;
+  right: 0;
+  top: 0;
+}
