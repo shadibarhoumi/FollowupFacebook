@@ -1,0 +1,19 @@
+.nubFollowupIcon {
+  background-image: url('chrome-extension://__MSG_@@extension_id__/images/lifesaver-icon.png');
+  background-repeat: no-repeat;
+  width: 22px;
+  background-size: 13px 13px;
+  background-position: 9px 6px;
+}
+
+.shiftFbChatSidebar {
+  right: 254px !important;
+}
+
+.shiftBody {
+  padding-right: 254px !important;
+}
+
+.shiftFbDockWrapper {
+  right: 459px !important;
+}
