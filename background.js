@@ -9,9 +9,6 @@ var config = {
 };
 firebase.initializeApp(config);
 
-console.log('Firebase');
-console.log(firebase);
-
 // Get a reference to the database service
 var database = firebase.database();
 
@@ -20,16 +17,35 @@ function addToFollowup(fbUsername, fbContact) {
   firebase.database().ref('users/' + fbUsername + '/contactsToFollowup').push(fbContact);
 }
 
+function sendContactToView(fbContact) {
+  chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+    chrome.tabs.sendMessage(tabs[0].id, { message: 'RECEIVED_CONTACT_FROM_DB', fbContact: fbContact });
+  });
+}
+
+// fetch contacts
+function fetchContacts(fbUsername, callback) {
+  firebase.database().ref('users/' + fbUsername + '/contactsToFollowup').on('child_added', function (snapshot) {
+    var contactWithId = Object.assign(snapshot.val(), { contactId: snapshot.key });
+    sendContactToView(contactWithId);
+  });
+}
+
+function removeFromFollowup(fbUsername, contactId) {
+  firebase.database().ref('users/' + fbUsername + '/contactsToFollowup/' + contactId).remove(function (response) {
+  });
+}
+
 // listen for ADD_CONTACT message
 chrome.runtime.onMessage.addListener(
   function (request, sender, sendResponse) {
-    if (request.message === 'ADD_CONTACT') {
-      console.log('got request!');
-      console.log(request);
-
+    if (request.message === 'ADD_CONTACT_TO_DB') {
       addToFollowup(request.fbUsername, request.fbContact);
-
-      sendResponse({ statusMessage: 'Tried our best!' });
+      sendResponse({ statusMessage: 'Successfully added contact!' });
+    } else if (request.message === 'FETCH_CONTACTS_FROM_DB') {
+      fetchContacts(request.fbUsername, sendResponse);
+    } else if (request.message === 'REMOVE_CONTACT_FROM_DB') {
+      removeFromFollowup(request.fbUsername, request.contactId);
     }
   });
 

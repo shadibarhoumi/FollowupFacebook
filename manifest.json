@@ -20,7 +20,7 @@
   "content_scripts": [
     {
       "matches": ["https://www.facebook.com/*"],
-      "js": ["apis/jquery.js", "facebook.js"],
+      "js": ["apis/jquery.js", "apis/moment.js", "facebook.js"],
       "css": ["css/facebook.css"]
     }
   ],
