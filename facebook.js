@@ -1,4 +1,9 @@
 $(function () {
+  // extend jquery
+  $.fn.exists = function () {
+    return this.length !== 0;
+  };
+
   const ONE_DAY_MILLISECONDS = 86400000;
 
   // followup icon to place in chat window
@@ -65,20 +70,17 @@ $(function () {
 
   // fetch all open facebook chat windows and insert icon
   var $openedNubs = $('.fbNub.opened');
-  console.log($openedNubs);
   $openedNubs.each(function (index) {
     var $nub = $(this);
-    $nub.addClass('followupButtonAdded');
-    var fbContactName = $nub.find('.titlebarText')[0].firstChild.innerText;
-    var $titlebar = $nub.find('.titlebarButtonWrapper').first();
-    var $icon = $(iconTemplateString).prependTo($titlebar);
-    var $iconLink = $icon.children('a').first();
 
-    // $iconLink.click(function (e) {
-    //   e.preventDefault();
-    //   var followupDate = Date.now() + ONE_DAY_MILLISECONDS * 2; // defaults to 2 days for now
-    //   addContactToDB(fbUsername, { fbContactName: fbContactName, followupDate: followupDate });
-    // });
+    // if nub is actually an open nub
+    if ($nub.find('.titlebarText').exists() && $nub.find('.titlebarButtonWrapper')) {
+      $nub.addClass('followupButtonAdded');
+      var fbContactName = $nub.find('.titlebarText')[0].firstChild.innerText;
+      var $titlebar = $nub.find('.titlebarButtonWrapper').first();
+      var $icon = $(iconTemplateString).prependTo($titlebar);
+      var $iconLink = $icon.children('a').first();
+    }
   });
 
   // listen for opened chat windows and add icon
@@ -86,20 +88,10 @@ $(function () {
     var $potentialNubs = $('.fbNub.opened');
     $potentialNubs.each(function (index) {
       var $nub = $(this);
-      if (!$nub.hasClass('followupButtonAdded')) {
-        console.log('adding button to new nub');
+      if (!$nub.hasClass('followupButtonAdded')) { // if it is a new nub
         $nub.addClass('followupButtonAdded');
-        var fbContactName = $nub.find('.titlebarText')[0].firstChild.innerText;
-        console.log('contact name: ' + fbContactName);
         var $titlebar = $nub.find('.titlebarButtonWrapper').first();
         var $icon = $(iconTemplateString).prependTo($titlebar);
-        var $iconLink = $icon.children('a').first();
-
-        // $iconLink.click(function (e) {
-        //   e.preventDefault();
-        //   var followupDate = Date.now() + ONE_DAY_MILLISECONDS * 2; // defaults to 2 days for now
-        //   addContactToDB(fbUsername, { fbContactName: fbContactName, followupDate: followupDate });
-        // });
       }
     });
   });
