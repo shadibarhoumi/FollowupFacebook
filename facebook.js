@@ -59,11 +59,17 @@ $(function () {
     '</div>',
   ].join('\n');
 
+  // turns facebook username into a firebase-appropriate username
+  var formatUsername(fbUsername) {
+    return fbUsername.replace(/\./g, '-').toLowerCase();
+  }
+
   // extract fb profile URL from profile icon in blue bar
   var fbProfileURL = $('a[data-testid="blue_bar_profile_link"]').first().attr('href');
 
   // get the username after the '/' character in the profile url
-  var fbUsername = fbProfileURL.split('/').pop();
+  var fbUsername = formatUsername(fbProfileURL.split('/').pop());
+  
 
   // has the sidebar been loaded for the first time
   var sidebarLoaded = false;
