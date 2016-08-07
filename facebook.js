@@ -16,7 +16,7 @@ $(function () {
 
   const followupContactTemplateString = [
     '<li class="followupContactItem _42fz">',
-       '<a class="followupContactLink _55ln" rel="ignore" href="#">',
+       '<a class="followupContactLink" rel="ignore" href="#">',
           '<div class="_55lp">',
              '<div class="_55lq">',
                 '<div size="32" class="_55lt" style="width: 32px; height: 32px;"><img src="https://scontent.fsnc1-1.fna.fbcdn.net/v/t1.0-1/c28.0.64.64/p64x64/13321958_1314770658550849_4601290026555210969_n.jpg?oh=0a14b29203a3474c434214c57950a825&amp;oe=57EB3DD1" width="32" height="32" alt="" class="img"></div>',
@@ -60,7 +60,7 @@ $(function () {
   ].join('\n');
 
   // turns facebook username into a firebase-appropriate username
-  var formatUsername(fbUsername) {
+  function formatUsername(fbUsername) {
     return fbUsername.replace(/\./g, '-').toLowerCase();
   }
 
@@ -211,6 +211,7 @@ $(function () {
       } else if (request.message === 'CLOSE_SIDEBAR') {
         closeSidebar();
       } else if (request.message === 'RECEIVED_CONTACT_FROM_DB') {
+        console.log('received contact from db');
         addContactToSidebar(request.fbContact);
       }
     });
