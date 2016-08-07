@@ -81,26 +81,38 @@ $(function () {
       }, callback);
   }
 
+  // add icon to nub and style appropriately
+  function configureOpenNub($nub) {
+    $nub.addClass('followupButtonAdded');
+
+    var contactName = $nub.find('a.titlebarText span')[0].innerText;
+    var $titlebar = $nub.find('.titlebarButtonWrapper').first();
+    var $iconWrapper = $(iconTemplateString).prependTo($titlebar);
+    var $iconLink = $iconWrapper.children('a').first();
+    
+    doesContactExist(fbUsername, contactName, function(response) {
+      if (response.exists) {
+        $iconLink.addClass('active');
+        $iconLink.attr('data-contactid-nub', response.contactId);
+      }
+    });
+  }
+
+  // make sure that nub is a fully loaded open nub (we know its fully loaded if the contact name is present)
+  function isOpenNub($nub) {
+    return $nub.find('a.titlebarText span').exists()
+      && $nub.find('a.titlebarText span')[0].innerText.length > 0
+      && $nub.find('.titlebarButtonWrapper');
+  }
+
   // fetch all open facebook chat windows and insert icon
   var $openedNubs = $('.fbNub.opened');
   $openedNubs.each(function (index) {
     var $nub = $(this);
 
     // if nub is actually an open nub
-    if ($nub.find('.titlebarText').exists() && $nub.find('.titlebarButtonWrapper')) {
-      $nub.addClass('followupButtonAdded');
-      var contactName = $nub.find('.titlebarText')[0].firstChild.innerText;
-      var $titlebar = $nub.find('.titlebarButtonWrapper').first();
-      var $iconWrapper = $(iconTemplateString).prependTo($titlebar);
-      var $iconLink = $iconWrapper.children('a').first();
-      doesContactExist(fbUsername, contactName, function(response) {
-        console.log('got response as to whether contact exists');
-        console.log(response);
-        if (response.exists) {
-          $iconLink.addClass('active');
-          $iconLink.attr('data-contactid-nub', response.contactId);
-        }
-      });
+    if (isOpenNub($nub)) {
+      configureOpenNub($nub);
     }
   });
 
@@ -109,10 +121,8 @@ $(function () {
     var $potentialNubs = $('.fbNub.opened');
     $potentialNubs.each(function (index) {
       var $nub = $(this);
-      if (!$nub.hasClass('followupButtonAdded')) { // if it is a new nub
-        $nub.addClass('followupButtonAdded');
-        var $titlebar = $nub.find('.titlebarButtonWrapper').first();
-        var $icon = $(iconTemplateString).prependTo($titlebar);
+      if (!$nub.hasClass('followupButtonAdded') && isOpenNub($nub)) { // if it is a new nub
+        configureOpenNub($nub);
       }
     });
   });
