@@ -17,13 +17,13 @@ var database = firebase.database();
 var listenerRegistered = false;
 
 // data write methods
-function addToFollowup(fbUsername, fbContact) {
-  firebase.database().ref('users/' + fbUsername + '/contactsToFollowup').push(fbContact);
+function addToFollowup(fbUsername, contact) {
+  firebase.database().ref('users/' + fbUsername + '/contactsToFollowup').push(contact);
 }
 
-function sendContactToView(fbContact) {
+function sendContactToView(contact) {
   chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-    chrome.tabs.sendMessage(tabs[0].id, { message: 'RECEIVED_CONTACT_FROM_DB', fbContact: fbContact });
+    chrome.tabs.sendMessage(tabs[0].id, { message: 'RECEIVED_CONTACT_FROM_DB', contact: contact });
   });
 }
 
@@ -51,11 +51,27 @@ function fetchContactsOnce(fbUsername) {
   });
 }
 
+function doesContactExist(fbUsername, contactName, sendResponse) {
+  var ref = firebase.database().ref('users/' + fbUsername + '/contactsToFollowup');
+  // sendResponse = sendResponse.bind
+  ref.orderByChild('contactName').equalTo(contactName).once('value', function (snapshot) {
+    var matches = snapshot.val();
+    console.log('matches for ' + contactName);
+    console.log(matches);
+    if (matches) {
+      var contactId = Object.keys(matches)[0];
+      sendResponse({ exists: true, contactId: contactId });
+    } else {
+      sendResponse({ exists: false })
+    }
+  });
+}
+
 // listen for ADD_CONTACT message
 chrome.runtime.onMessage.addListener(
   function (request, sender, sendResponse) {
     if (request.message === 'ADD_CONTACT_TO_DB') {
-      addToFollowup(request.fbUsername, request.fbContact);
+      addToFollowup(request.fbUsername, request.contact);
     } else if (request.message === 'FETCH_CONTACTS_FROM_DB') {
       // register listener if first time fetching contacts
       if (!listenerRegistered) {
@@ -66,7 +82,10 @@ chrome.runtime.onMessage.addListener(
       }
     } else if (request.message === 'REMOVE_CONTACT_FROM_DB') {
       removeFromFollowup(request.fbUsername, request.contactId);
+    } else if (request.message === 'DOES_CONTACT_EXIST') {
+      doesContactExist(request.fbUsername, request.contactName, sendResponse);
     }
+    return true;
   });
 
 // send OPEN_SIDEBAR or CLOSE_SIDEBAR message to content script when browser action icon is clicked

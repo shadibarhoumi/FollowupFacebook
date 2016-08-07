@@ -16,19 +16,17 @@ $(function () {
 
   const followupContactTemplateString = [
     '<li class="followupContactItem _42fz">',
-       '<a class="followupContactLink" rel="ignore" href="#">',
+       '<div class="followupContactLink">',
+          '<a class="followupCloseButton" href="#">&times;</a>',
           '<div class="_55lp">',
-             '<div class="_55lq">',
-                '<div size="32" class="_55lt" style="width: 32px; height: 32px;"><img src="https://scontent.fsnc1-1.fna.fbcdn.net/v/t1.0-1/c28.0.64.64/p64x64/13321958_1314770658550849_4601290026555210969_n.jpg?oh=0a14b29203a3474c434214c57950a825&amp;oe=57EB3DD1" width="32" height="32" alt="" class="img"></div>',
-             '</div>',
              '<div class="_5bon">',
                '<div class="_568z">',
-                 '<div class="followupDate _568-"></div>',
+                 '<div class="followupDate"></div>',
               '</div>',
              '</div>',
-             '<div class="followupContactName _55lr"></div>',
+             '<div class="followupContactName"></div>',
           '</div>',
-       '</a>',
+       '</div>',
     '</li>',
   ].join('\n');
 
@@ -74,6 +72,15 @@ $(function () {
   // has the sidebar been loaded for the first time
   var sidebarLoaded = false;
 
+  // send message to background checking whether contact with name exists
+  function doesContactExist(fbUsername, contactName, callback) {
+    chrome.runtime.sendMessage(
+      { message: 'DOES_CONTACT_EXIST',
+        fbUsername: fbUsername,
+        contactName: contactName
+      }, callback);
+  }
+
   // fetch all open facebook chat windows and insert icon
   var $openedNubs = $('.fbNub.opened');
   $openedNubs.each(function (index) {
@@ -82,10 +89,18 @@ $(function () {
     // if nub is actually an open nub
     if ($nub.find('.titlebarText').exists() && $nub.find('.titlebarButtonWrapper')) {
       $nub.addClass('followupButtonAdded');
-      var fbContactName = $nub.find('.titlebarText')[0].firstChild.innerText;
+      var contactName = $nub.find('.titlebarText')[0].firstChild.innerText;
       var $titlebar = $nub.find('.titlebarButtonWrapper').first();
-      var $icon = $(iconTemplateString).prependTo($titlebar);
-      var $iconLink = $icon.children('a').first();
+      var $iconWrapper = $(iconTemplateString).prependTo($titlebar);
+      var $iconLink = $iconWrapper.children('a').first();
+      doesContactExist(fbUsername, contactName, function(response) {
+        console.log('got response as to whether contact exists');
+        console.log(response);
+        if (response.exists) {
+          $iconLink.addClass('active');
+          $iconLink.attr('data-contactid-nub', response.contactId);
+        }
+      });
     }
   });
 
@@ -107,13 +122,13 @@ $(function () {
     e.preventDefault();
     var $icon = $(this);
     var followupDate = Date.now() + ONE_DAY_MILLISECONDS * 2; // defaults to 2 days for now
-    var fbContactName = $icon.parent().parent().parent().find('.titlebarText')[0].firstChild.innerText;
-    addContactToDB(fbUsername, { fbContactName: fbContactName, followupDate: followupDate });
+    var contactName = $icon.parent().parent().parent().find('.titlebarText')[0].firstChild.innerText;
+    addContactToDB(fbUsername, { contactName: contactName, followupDate: followupDate });
   });
 
   // send ADD_CONTACT message w/ contact info to background script
-  function addContactToDB(fbUsername, fbContact) {
-    chrome.runtime.sendMessage({ message: 'ADD_CONTACT_TO_DB', fbUsername: fbUsername, fbContact: fbContact });
+  function addContactToDB(fbUsername, contact) {
+    chrome.runtime.sendMessage({ message: 'ADD_CONTACT_TO_DB', fbUsername: fbUsername, contact: contact });
   }
 
   // send REMOVE_CONTACT message w/ contact info to background script
@@ -130,11 +145,16 @@ $(function () {
   }
 
   function bindSidebarEvents() {
-    $('.followupSidebar').delegate('li a.followupContactLink', 'click', function (e) {
-      $contactItem = $(this).parent();
+    $('.followupSidebar').delegate('a.followupCloseButton', 'click', function (e) {
+      // remove item from list
+      var $contactItem = $(this).parent().parent();
       var contactId = $contactItem.attr('data-contactid');
       $contactItem.remove();
-      removeContactFromDB(contactId);
+      // locate this person's open nub (if indeed there is one)
+      var $iconLink = $('a[data-contactid-nub="' + contactId + '"]');
+      $iconLink.removeClass('active');
+      $iconLink.removeAttr('data-contactid-nub');
+      removeContactFromDB(contactId); 
     });
   }
 
@@ -161,22 +181,22 @@ $(function () {
     $('.followupSidebarContainer').addClass('hidden');
   }
 
-  function createContactElement(fbContact) {
-    var $fbContact = $(followupContactTemplateString);
-    $fbContact.attr('data-contactid', fbContact.contactId);
-    $fbContact.find('.followupContactName').first().text(fbContact.fbContactName);
-    var formattedDate = moment(fbContact.followupDate, 'x').fromNow();
-    $fbContact.find('.followupDate').first().text(formattedDate);
-    return $fbContact;
+  function createContactElement(contact) {
+    var $contact = $(followupContactTemplateString);
+    $contact.attr('data-contactid', contact.contactId);
+    $contact.find('.followupContactName').first().text(contact.contactName);
+    var formattedDate = moment(contact.followupDate, 'x').fromNow();
+    $contact.find('.followupDate').first().text(formattedDate);
+    return $contact;
   }
 
   function addContactsToSidebar() {
     chrome.runtime.sendMessage({ message: 'FETCH_CONTACTS_FROM_DB', fbUsername: fbUsername });
   }
 
-  function addContactToSidebar(fbContact) {
-    var $fbContact = createContactElement(fbContact);
-    $('.followupContactList').append($fbContact);
+  function addContactToSidebar(contact) {
+    var $contact = createContactElement(contact);
+    $('.followupContactList').append($contact);
   }
 
   function revealSidebar() {
@@ -211,8 +231,7 @@ $(function () {
       } else if (request.message === 'CLOSE_SIDEBAR') {
         closeSidebar();
       } else if (request.message === 'RECEIVED_CONTACT_FROM_DB') {
-        console.log('received contact from db');
-        addContactToSidebar(request.fbContact);
+        addContactToSidebar(request.contact);
       }
     });
 

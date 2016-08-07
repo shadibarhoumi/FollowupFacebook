@@ -3,11 +3,15 @@
 }
 
 .nubFollowupIcon {
-  background-image: url('chrome-extension://__MSG_@@extension_id__/images/lifesaver-icon.png');
+  background-image: url('chrome-extension://__MSG_@@extension_id__/images/lifesaver-icon-grey.png');
   background-repeat: no-repeat;
   width: 22px;
   background-size: 13px 13px;
   background-position: 9px 6px;
+}
+
+.nubFollowupIcon.active {
+  background-image: url('chrome-extension://__MSG_@@extension_id__/images/lifesaver-icon-color.png');
 }
 
 .shiftFbChatSidebar {
@@ -31,6 +35,7 @@
 
 .followupSidebarContainer {
   box-shadow: 1px 0 0 #f0f0f2 inset;
+  background-color: #e9ebee;
   border-left-color: #ccc;
   border-left: 1px solid rgba(0, 0, 0, .4);
   position: fixed;
@@ -51,11 +56,8 @@
     line-height: 32px;
     padding: 4px 0;
     position: relative;
+    text-decoration: none;
     border-bottom: 1px solid #ccc;
-}
-
-.followupContactLink:focus, .followupContactLink:hover, li.selected .followupContactLink {
-  text-decoration: none;
 }
 
 .followupText {
@@ -65,4 +67,45 @@
   margin-left: auto;
   width: 98px;
   line-height: 43px;
+}
+
+.followupContactName {
+  font-size: 14px;
+  font-weight: normal;
+  overflow: hidden;
+  padding-left: 24px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 32px;
+}
+
+.followupCloseButton {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 1;
+  font-size: 20px;
+  font-weight: bold;
+  line-height: 18px;
+  color: #000000;
+  text-shadow: 0 1px 0 #ffffff;
+  opacity: 0.2;
+  filter: alpha(opacity=20);
+  text-decoration: none;
+}
+
+.followupCloseButton:hover {
+  color: #000000;
+  text-decoration: none;
+  opacity: 0.4;
+  filter: alpha(opacity=40);
+  cursor: pointer;
+}
+
+.followupDate {
+  color: #90949c;
+  display: inline-block;
+  font-size: 11px;
+  line-height: 12px;
+  vertical-align: middle;
 }

@@ -13,7 +13,7 @@
   },
 
   "browser_action": {
-    "default_icon": "images/lifesaver-icon.png",
+    "default_icon": "images/lifesaver-icon-color.png",
     "default_title": "Followup for Facebook"
   },
 
@@ -26,7 +26,8 @@
   ],
 
   "web_accessible_resources": [
-    "images/lifesaver-icon.png",
+    "images/lifesaver-icon-grey.png",
+    "images/lifesaver-icon-color.png",
     "https://www.gstatic.com/firebasejs/3.1.0/firebase.js"
   ],
 
