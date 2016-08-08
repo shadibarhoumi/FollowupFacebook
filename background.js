@@ -69,15 +69,9 @@ chrome.runtime.onMessage.addListener(
     return true;
   });
 
-// send OPEN_SIDEBAR or CLOSE_SIDEBAR message to content script when browser action icon is clicked
+// send TOGGLE_SIDEBAR message to content script when browser action icon is clicked
 chrome.browserAction.onClicked.addListener(function (tab) {
   chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-    if (sidebarOpen) { // sidebar is open so close it
-      chrome.tabs.sendMessage(tabs[0].id, { message: 'CLOSE_SIDEBAR' }, function (response) {}); // content script does not send response
-      sidebarOpen = false;
-    } else { // sidebar is closed so open it
-      chrome.tabs.sendMessage(tabs[0].id, { message: 'OPEN_SIDEBAR' }, function (response) {}); // content script does not send response
-      sidebarOpen = true;
-    }
+    chrome.tabs.sendMessage(tabs[0].id, { message: 'TOGGLE_SIDEBAR' });
   });
 });

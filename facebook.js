@@ -6,6 +6,8 @@ $(function () {
 
   const ONE_DAY_MILLISECONDS = 86400000;
 
+  var sidebarOpen = false;
+
   // followup icon to place in chat window
   const iconTemplateString = [
     '<span class="_3a61">',
@@ -226,19 +228,13 @@ $(function () {
     chrome.runtime.sendMessage({ message: 'FETCH_CONTACTS_FROM_DB', fbUsername: fbUsername });
   }
 
-  function appendInOrder(listClass, $contact, followupDate, xname) {
+  function appendInOrder(listClass, $contact, followupDate) {
     var $list = $(listClass);
-
-    console.log('placing contact: ' + xname);
-    console.log('contact followup date: ' + followupDate);
 
     var inserted = false; // tracks whether element was inserted into list
     $list.children().each(function(index) {
       var $existingContact = $(this);
       var existingContactFollowupDate = $existingContact.attr('data-followupdate');
-      console.log('existing contact');
-      console.log($existingContact);
-      console.log('ec followup: ' + existingContactFollowupDate);
       if (followupDate < existingContactFollowupDate) {
         $contact.insertBefore($existingContact);
         inserted = true;
@@ -262,11 +258,9 @@ $(function () {
       $contact.find('.followupContactName').addClass('now');
       $contact.find('.followupDate').addClass('now');
       $contact.addClass('now');
-      appendInOrder('.followupNowList', $contact, contact.followupDate, contact.contactName);
-      // $('.followupNowList').append($contact);
+      appendInOrder('.followupNowList', $contact, contact.followupDate);
     } else {
-      appendInOrder('.followupContactList', $contact, contact.followupDate, contact.contactName);
-      // $('.followupContactList').append($contact);
+      appendInOrder('.followupContactList', $contact, contact.followupDate);
     }
   }
 
@@ -297,10 +291,14 @@ $(function () {
   // listen for OPEN_SIDEBAR message
   chrome.runtime.onMessage.addListener(
     function (request, sender, sendResponse) {
-      if (request.message === 'OPEN_SIDEBAR') {
-        openSidebar();
-      } else if (request.message === 'CLOSE_SIDEBAR') {
-        closeSidebar();
+      if (request.message === 'TOGGLE_SIDEBAR') {
+        if (sidebarOpen) {
+          closeSidebar();
+          sidebarOpen = false;
+        } else {
+          openSidebar();
+          sidebarOpen = true;
+        }
       } else if (request.message === 'RECEIVED_CONTACT_FROM_DB') {
         addContactToSidebar(request.contact);
       }
