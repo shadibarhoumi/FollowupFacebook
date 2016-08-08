@@ -13,9 +13,6 @@ firebase.initializeApp(config);
 // Get a reference to the database service
 var database = firebase.database();
 
-// track whether contact listener has been registered
-var listenerRegistered = false;
-
 // data write methods
 function addToFollowup(fbUsername, contact, sendResponse) {
   var contactRef = firebase.database().ref('users/' + fbUsername + '/contactsToFollowup').push(contact);
@@ -35,20 +32,11 @@ function removeFromFollowup(fbUsername, contactId) {
 
 // registering new contact listener
 function registerContactListener(fbUsername, callback) {
-  firebase.database().ref('users/' + fbUsername + '/contactsToFollowup').on('child_added', function (snapshot) {
+  var ref = firebase.database().ref('users/' + fbUsername + '/contactsToFollowup').orderByChild('followupDate');
+  ref.off('child_added'); // detach any previous listeners
+  ref.on('child_added', function (snapshot) { // attach listener
     var contactWithId = Object.assign(snapshot.val(), { contactId: snapshot.key });
     sendContactToView(contactWithId);
-  });
-}
-
-// get contacts once from firebase without registering any listeners
-function fetchContactsOnce(fbUsername) {
-  firebase.database().ref('users/' + fbUsername + '/contactsToFollowup').once('value', function (snapshot) {
-    var contacts = snapshot.val();
-    for (var key in contacts) {
-      var contactWithId = Object.assign(contacts[key], { contactId: key });
-      sendContactToView(contactWithId);
-    }
   });
 }
 
@@ -57,8 +45,6 @@ function doesContactExist(fbUsername, contactName, sendResponse) {
   // sendResponse = sendResponse.bind
   ref.orderByChild('contactName').equalTo(contactName).once('value', function (snapshot) {
     var matches = snapshot.val();
-    console.log('matches for ' + contactName);
-    console.log(matches);
     if (matches) {
       var contactId = Object.keys(matches)[0];
       sendResponse({ exists: true, contactId: contactId });
@@ -74,13 +60,7 @@ chrome.runtime.onMessage.addListener(
     if (request.message === 'ADD_CONTACT_TO_DB') {
       addToFollowup(request.fbUsername, request.contact, sendResponse);
     } else if (request.message === 'FETCH_CONTACTS_FROM_DB') {
-      // register listener if first time fetching contacts
-      if (!listenerRegistered) {
-        listenerRegistered = true;
         registerContactListener(request.fbUsername);
-      } else { // just fetch contacts otherwise
-        fetchContactsOnce(request.fbUsername);
-      }
     } else if (request.message === 'REMOVE_CONTACT_FROM_DB') {
       removeFromFollowup(request.fbUsername, request.contactId);
     } else if (request.message === 'DOES_CONTACT_EXIST') {

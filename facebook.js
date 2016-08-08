@@ -41,8 +41,14 @@ $(function () {
           '<div class="uiScrollableAreaWrap scrollable" aria-label="Scrollable region" role="group" tabindex="0">',
              '<div class="uiScrollableAreaBody" style="width:205px;">',
                 '<div class="uiScrollableAreaContent">',
-                   '<div data-ft="{&quot;tn&quot;:&quot;+]&quot;}" id="u_0_2r">',
+                   '<div>',
                       '<div class="fbChatOrderedList clearfix">',
+                        '<div>',
+                          '<div class="followupHeading now">Now</div>',
+                          '<ul class="followupNowList">',
+                          '</ul>',
+                        '</div>',
+                        '<div class="followupHeading later">Later</div>',
                          '<div>',
                             '<ul class="followupContactList">',
                             '</ul>',
@@ -222,7 +228,18 @@ $(function () {
 
   function addContactToSidebar(contact) {
     var $contact = createContactElement(contact);
-    $('.followupContactList').append($contact);
+    console.log('got contact');
+    console.log(contact);
+    console.log('date is before now?');
+    var isDue = moment(contact.followupDate, 'x').isBefore(moment());
+    if (isDue) {
+      $contact.find('.followupContactName').addClass('now');
+      $contact.find('.followupDate').addClass('now');
+      $contact.addClass('now');
+      $('.followupNowList').append($contact);
+    } else {
+      $('.followupContactList').append($contact);
+    }
   }
 
   function revealSidebar() {
