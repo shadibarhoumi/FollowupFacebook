@@ -17,8 +17,9 @@ var database = firebase.database();
 var listenerRegistered = false;
 
 // data write methods
-function addToFollowup(fbUsername, contact) {
-  firebase.database().ref('users/' + fbUsername + '/contactsToFollowup').push(contact);
+function addToFollowup(fbUsername, contact, sendResponse) {
+  var contactRef = firebase.database().ref('users/' + fbUsername + '/contactsToFollowup').push(contact);
+  sendResponse({ contactId: contactRef.key });
 }
 
 function sendContactToView(contact) {
@@ -71,7 +72,7 @@ function doesContactExist(fbUsername, contactName, sendResponse) {
 chrome.runtime.onMessage.addListener(
   function (request, sender, sendResponse) {
     if (request.message === 'ADD_CONTACT_TO_DB') {
-      addToFollowup(request.fbUsername, request.contact);
+      addToFollowup(request.fbUsername, request.contact, sendResponse);
     } else if (request.message === 'FETCH_CONTACTS_FROM_DB') {
       // register listener if first time fetching contacts
       if (!listenerRegistered) {

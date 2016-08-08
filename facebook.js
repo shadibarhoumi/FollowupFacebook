@@ -131,14 +131,30 @@ $(function () {
   $('.fbNubGroup .fbNubGroup').delegate('.nubFollowupIcon', 'click', function (e) {
     e.preventDefault();
     var $icon = $(this);
-    var followupDate = Date.now() + ONE_DAY_MILLISECONDS * 2; // defaults to 2 days for now
-    var contactName = $icon.parent().parent().parent().find('.titlebarText')[0].firstChild.innerText;
-    addContactToDB(fbUsername, { contactName: contactName, followupDate: followupDate });
+
+    if ($icon.hasClass('active')) { // remove contact
+      var contactId = $icon.attr('data-contactid-nub');
+      var $contactItem = $('.followupContactItem[data-contactid="' + contactId + '"]');
+      $contactItem.remove();
+      removeContactFromDB(contactId);
+      $icon.removeClass('active');
+      $icon.removeAttr('data-contactid-nub');
+    } else { // add contact
+      var followupDate = Date.now() + ONE_DAY_MILLISECONDS * 2; // defaults to 2 days for now
+      var contactName = $icon.parent().parent().parent().find('.titlebarText')[0].firstChild.innerText;
+      addContactToDB(fbUsername, { contactName: contactName, followupDate: followupDate }, function(response) {
+        $icon.attr('data-contactid-nub', response.contactId);
+        $icon.addClass('active');
+      });
+    }
   });
 
   // send ADD_CONTACT message w/ contact info to background script
-  function addContactToDB(fbUsername, contact) {
-    chrome.runtime.sendMessage({ message: 'ADD_CONTACT_TO_DB', fbUsername: fbUsername, contact: contact });
+  function addContactToDB(fbUsername, contact, callback) {
+    chrome.runtime.sendMessage(
+      { message: 'ADD_CONTACT_TO_DB',
+        fbUsername: fbUsername,
+        contact: contact }, callback);
   }
 
   // send REMOVE_CONTACT message w/ contact info to background script
