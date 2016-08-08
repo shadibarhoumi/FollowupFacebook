@@ -44,7 +44,7 @@ $(function () {
                    '<div>',
                       '<div class="fbChatOrderedList clearfix">',
                         '<div>',
-                          '<div class="followupHeading now">Now</div>',
+                          '<div class="followupHeading now">Today</div>',
                           '<ul class="followupNowList">',
                           '</ul>',
                         '</div>',
@@ -226,19 +226,47 @@ $(function () {
     chrome.runtime.sendMessage({ message: 'FETCH_CONTACTS_FROM_DB', fbUsername: fbUsername });
   }
 
+  function appendInOrder(listClass, $contact, followupDate, xname) {
+    var $list = $(listClass);
+
+    console.log('placing contact: ' + xname);
+    console.log('contact followup date: ' + followupDate);
+
+    var inserted = false; // tracks whether element was inserted into list
+    $list.children().each(function(index) {
+      var $existingContact = $(this);
+      var existingContactFollowupDate = $existingContact.attr('data-followupdate');
+      console.log('existing contact');
+      console.log($existingContact);
+      console.log('ec followup: ' + existingContactFollowupDate);
+      if (followupDate < existingContactFollowupDate) {
+        $contact.insertBefore($existingContact);
+        inserted = true;
+        return false; // breaks each loop
+      }
+    });
+
+    if (!inserted) { // element is largest or list is empty
+      $list.append($contact);  
+    }
+  }
+
   function addContactToSidebar(contact) {
     var $contact = createContactElement(contact);
-    console.log('got contact');
-    console.log(contact);
-    console.log('date is before now?');
-    var isDue = moment(contact.followupDate, 'x').isBefore(moment());
+    $contact.attr('data-followupdate', contact.followupDate);
+    
+    var followUpDate = moment(contact.followupDate, 'x')
+    var endOfToday = moment({hour: 23, minute: 59, seconds: 59, milliseconds: 999});
+    var isDue = followUpDate.isBefore(endOfToday);
     if (isDue) {
       $contact.find('.followupContactName').addClass('now');
       $contact.find('.followupDate').addClass('now');
       $contact.addClass('now');
-      $('.followupNowList').append($contact);
+      appendInOrder('.followupNowList', $contact, contact.followupDate, contact.contactName);
+      // $('.followupNowList').append($contact);
     } else {
-      $('.followupContactList').append($contact);
+      appendInOrder('.followupContactList', $contact, contact.followupDate, contact.contactName);
+      // $('.followupContactList').append($contact);
     }
   }
 
