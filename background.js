@@ -20,7 +20,7 @@ function addToFollowup(fbUsername, contact, sendResponse) {
 }
 
 function sendContactToView(contact) {
-  chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+  chrome.tabs.query({ active: true }, function (tabs) {
     chrome.tabs.sendMessage(tabs[0].id, { message: 'RECEIVED_CONTACT_FROM_DB', contact: contact });
   });
 }
@@ -54,6 +54,23 @@ function doesContactExist(fbUsername, contactName, sendResponse) {
   });
 }
 
+// checks whether there are followups due today
+function checkFollowupsDue(fbUsername, sendResponse) {
+  var ref = firebase.database().ref('users/' + fbUsername + '/contactsToFollowup');
+  ref.orderByChild('followupDate').once('child_added', function(snapshot) {
+    var contact = snapshot.val();
+
+    var followUpDate = moment(contact.followupDate, 'x')
+    var endOfToday = moment({hour: 23, minute: 59, seconds: 59, milliseconds: 999});
+    var isDue = followUpDate.isBefore(endOfToday);
+
+    if (isDue) {
+      sendResponse({ followupsDue: true });
+    }
+  });
+  
+}
+
 // listen for ADD_CONTACT message
 chrome.runtime.onMessage.addListener(
   function (request, sender, sendResponse) {
@@ -65,6 +82,8 @@ chrome.runtime.onMessage.addListener(
       removeFromFollowup(request.fbUsername, request.contactId);
     } else if (request.message === 'DOES_CONTACT_EXIST') {
       doesContactExist(request.fbUsername, request.contactName, sendResponse);
+    } else if (request.message === 'CHECK_FOLLOWUPS_DUE') {
+      checkFollowupsDue(request.fbUsername, sendResponse);
     }
     return true;
   });

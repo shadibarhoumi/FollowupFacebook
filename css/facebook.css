@@ -67,10 +67,9 @@
 
 .followupText {
   font-size: 18px;
-  margin-right: auto;
   color: #656565;
-  margin-left: auto;
-  width: 98px;
+  width: 250px;
+  text-align: center;
   line-height: 43px;
 }
 
@@ -135,4 +134,14 @@
   font-size: 11px;
   line-height: 12px;
   vertical-align: middle;
+}
+
+.inboxZeroMessage {
+  font-size: 19px;
+  font-weight: bold;
+  left: 2;
+  width: 250px;
+  text-align: center;
+  color: #888;
+  margin-top: 100px;
 }

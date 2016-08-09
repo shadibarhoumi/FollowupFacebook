@@ -8,7 +8,7 @@
   "background": {
     "scripts": ["apis/firebase.js", "apis/firebase-app.js",
       "apis/firebase-database.js", "apis/firebase-auth.js",
-      "background.js"],
+      "apis/moment.js", "background.js"],
     "persistent": false
   },
 

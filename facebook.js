@@ -36,7 +36,7 @@ $(function () {
   const sidebarTemplateString = [
     '<div class="followupSidebarContainer">',
       '<div class="_5qqe"></div>',
-      '<div class="followupText _5qqe">Follow Up!</div>',
+      '<div class="followupText _5qqe">Follow Up</div>',
       '<div aria-label="Followup for Facebook" class="fbChatSidebarBody followupSidebar" role="complementary" style="height: 100%;">',
        '<h3 class="accessible_elem">Followup for Facebook</h3>',
        '<div class="uiScrollableArea scrollableOrderedList _5qmw fade contentAfter" style="width:252px;" id="u_0_2q">',
@@ -45,17 +45,16 @@ $(function () {
                 '<div class="uiScrollableAreaContent">',
                    '<div>',
                       '<div class="fbChatOrderedList clearfix">',
-                        '<div>',
+                        '<div class="nowWrapper hidden">',
                           '<div class="followupHeading now">Today</div>',
-                          '<ul class="followupNowList">',
-                          '</ul>',
+                          '<ul class="followupNowList"></ul>',
                         '</div>',
-                        '<div class="followupHeading later">Later</div>',
-                         '<div>',
-                            '<ul class="followupContactList">',
-                            '</ul>',
-                         '</div>',
+                        '<div class="laterWrapper hidden">',
+                          '<div class="followupHeading later">Later</div>',
+                          '<ul class="followupLaterList"></ul>',
+                        '</div>',
                       '</div>',
+                      '<div class="inboxZeroMessage">Inbox Zero!</div>',
                    '</div>',
                 '</div>',
              '</div>',
@@ -143,10 +142,10 @@ $(function () {
     if ($icon.hasClass('active')) { // remove contact
       var contactId = $icon.attr('data-contactid-nub');
       var $contactItem = $('.followupContactItem[data-contactid="' + contactId + '"]');
-      $contactItem.remove();
-      removeContactFromDB(contactId);
-      $icon.removeClass('active');
-      $icon.removeAttr('data-contactid-nub');
+      
+      removeContactItemAndUpdateList($contactItem);
+
+      deactivateNubIcon($icon);
     } else { // add contact
       var followupDate = Date.now() + ONE_DAY_MILLISECONDS * 2; // defaults to 2 days for now
       var contactName = $icon.parent().parent().parent().find('.titlebarText')[0].firstChild.innerText;
@@ -154,8 +153,15 @@ $(function () {
         $icon.attr('data-contactid-nub', response.contactId);
         $icon.addClass('active');
       });
+      openSidebar();
     }
   });
+
+  // grey out nub icon and strip data attributes
+  function deactivateNubIcon($icon) {
+    $icon.removeClass('active');
+    $icon.removeAttr('data-contactid-nub');
+  }
 
   // send ADD_CONTACT message w/ contact info to background script
   function addContactToDB(fbUsername, contact, callback) {
@@ -170,6 +176,27 @@ $(function () {
     chrome.runtime.sendMessage({ message: 'REMOVE_CONTACT_FROM_DB', fbUsername: fbUsername, contactId: contactId });
   }
 
+  // removes contact node from DOM and removes lists / displays inbox zero message if necessary
+  function removeContactItemAndUpdateList($contactItem) {
+    var contactId = $contactItem.attr('data-contactid');
+    
+    var $list = $contactItem.parent();
+    var $listWrapper = $contactItem.parent().parent();
+    $contactItem.remove();
+
+    // remove list heading if contact was last in list
+    if ($list.children().length === 0) {
+      $listWrapper.addClass('hidden');
+    }
+
+    // if no contacts in either list
+    if ($('.followupNowList').children().length === 0 && $('.followupLaterList').children().length === 0) {
+      $('.inboxZeroMessage').removeClass('hidden');
+    }
+
+    removeContactFromDB(contactId);
+  }
+
   // *** SIDEBAR ***
   // shift facebook contents left to make room for sidebar
   function makeRoomForSidebar() {
@@ -180,15 +207,15 @@ $(function () {
 
   function bindSidebarEvents() {
     $('.followupSidebar').delegate('a.followupCloseButton', 'click', function (e) {
-      // remove item from list
       var $contactItem = $(this).parent().parent();
       var contactId = $contactItem.attr('data-contactid');
-      $contactItem.remove();
+
+      // remove item from list 
+      removeContactItemAndUpdateList($contactItem);
+      
       // locate this person's open nub (if indeed there is one)
-      var $iconLink = $('a[data-contactid-nub="' + contactId + '"]');
-      $iconLink.removeClass('active');
-      $iconLink.removeAttr('data-contactid-nub');
-      removeContactFromDB(contactId); 
+      var $icon = $('a[data-contactid-nub="' + contactId + '"]');
+      deactivateNubIcon($icon);
     });
   }
 
@@ -250,6 +277,8 @@ $(function () {
   function addContactToSidebar(contact) {
     var $contact = createContactElement(contact);
     $contact.attr('data-followupdate', contact.followupDate);
+
+    $('.inboxZeroMessage').addClass('hidden');
     
     var followUpDate = moment(contact.followupDate, 'x')
     var endOfToday = moment({hour: 23, minute: 59, seconds: 59, milliseconds: 999});
@@ -258,9 +287,11 @@ $(function () {
       $contact.find('.followupContactName').addClass('now');
       $contact.find('.followupDate').addClass('now');
       $contact.addClass('now');
+      $('.nowWrapper').removeClass('hidden');
       appendInOrder('.followupNowList', $contact, contact.followupDate);
     } else {
-      appendInOrder('.followupContactList', $contact, contact.followupDate);
+      $('.laterWrapper').removeClass('hidden');
+      appendInOrder('.followupLaterList', $contact, contact.followupDate);
     }
   }
 
@@ -274,18 +305,24 @@ $(function () {
   }
 
   function openSidebar() {
-    makeRoomForSidebar();
-    if (sidebarLoaded) {
-      revealSidebar();
-    } else {
-      sidebarLoaded = true;
-      createSidebar();
+    if (!sidebarOpen) {
+      makeRoomForSidebar();
+      if (sidebarLoaded) {
+        revealSidebar();
+      } else {
+        sidebarLoaded = true;
+        createSidebar();
+      }
+      sidebarOpen = true;
     }
   }
 
   function closeSidebar() {
-    removeRoomForSidebar();
-    hideSidebar();
+    if (sidebarOpen) {
+      removeRoomForSidebar();
+      hideSidebar();
+      sidebarOpen = false;
+    }
   }
 
   // listen for OPEN_SIDEBAR message
@@ -294,14 +331,20 @@ $(function () {
       if (request.message === 'TOGGLE_SIDEBAR') {
         if (sidebarOpen) {
           closeSidebar();
-          sidebarOpen = false;
         } else {
           openSidebar();
-          sidebarOpen = true;
         }
       } else if (request.message === 'RECEIVED_CONTACT_FROM_DB') {
         addContactToSidebar(request.contact);
       }
     });
 
+  // check whether there are followups due today
+  chrome.runtime.sendMessage(
+    { message: 'CHECK_FOLLOWUPS_DUE', fbUsername: fbUsername },
+    function(response) {
+      if (!!response && response.followupsDue) {
+        openSidebar();
+      }
+    });
 });
