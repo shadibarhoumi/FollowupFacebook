@@ -3,7 +3,7 @@
 
   "name": "Followup for Facebook",
   "description": "This extension allows Boomerang-style follow-up tracking for Facebook chats.",
-  "version": "0.0.0.2",
+  "version": "0.0.1.0",
 
   "background": {
     "scripts": ["apis/firebase.js", "apis/firebase-app.js",
@@ -20,7 +20,7 @@
   "content_scripts": [
     {
       "matches": ["https://www.facebook.com/*"],
-      "js": ["apis/jquery.js", "apis/moment.js", "facebook.js"],
+      "js": ["apis/jquery.js", "apis/moment.js", "apis/date.js", "facebook.js"],
       "css": ["css/facebook.css"]
     }
   ],

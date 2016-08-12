@@ -67,8 +67,12 @@ function checkFollowupsDue(fbUsername, sendResponse) {
     if (isDue) {
       sendResponse({ followupsDue: true });
     }
-  });
-  
+  }); 
+}
+
+function updateContactDate(fbUsername, contactId, followupDate) {
+  var ref = firebase.database().ref('users/' + fbUsername + '/contactsToFollowup/' + contactId);
+  ref.update({ followupDate: followupDate });
 }
 
 // listen for ADD_CONTACT message
@@ -84,6 +88,8 @@ chrome.runtime.onMessage.addListener(
       doesContactExist(request.fbUsername, request.contactName, sendResponse);
     } else if (request.message === 'CHECK_FOLLOWUPS_DUE') {
       checkFollowupsDue(request.fbUsername, sendResponse);
+    } else if (request.message === 'UPDATE_CONTACT_DATE_IN_DB') {
+      updateContactDate(request.fbUsername, request.contactId, request.followupDate);
     }
     return true;
   });

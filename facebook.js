@@ -21,10 +21,9 @@ $(function () {
        '<div class="followupContactLink">',
           '<a class="followupCloseButton" href="#">&times;</a>',
           '<div class="_55lp">',
-             '<div class="_5bon">',
-               '<div class="_568z">',
-                 '<div class="followupDate"></div>',
-              '</div>',
+             '<div class="dateWrapper">',
+               '<div class="followupDate"></div>',
+               '<div class="editDate hidden">in <span class="editDayCount" contenteditable=true>2</span> days</div>',
              '</div>',
              '<div class="followupContactName"></div>',
           '</div>',
@@ -63,6 +62,34 @@ $(function () {
       '</div>',
     '</div>',
   ].join('\n');
+
+  const dateEntryPopup = [
+    '<div class="dateEntryPopup">',
+      'This is the Date Entry Popup!',
+      '<input placeholder="days">',
+      '<>',
+    '</div>',
+  ].join('\n');
+
+  // used to set position in contenteditable div
+  function setCaretPosition($element, position) {
+    var textNode = $element[0].firstChild;
+    var caret = position;
+    var range = document.createRange();
+    range.setStart(textNode, caret);
+    range.setEnd(textNode, caret);
+    var selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+  }
+
+  function parseDate(dateString) {
+    var argArray = dateString.split(' ');
+    if (argArray.length !== 2) return moment();
+    var timeNumber = parseInt(argArray[0]);
+    var partOfDate = argArray[1];
+    return moment().add(timeNumber, partOfDate);
+  }
 
   // turns facebook username into a firebase-appropriate username
   function formatUsername(fbUsername) {
@@ -144,6 +171,7 @@ $(function () {
       var $contactItem = $('.followupContactItem[data-contactid="' + contactId + '"]');
       
       removeContactItemAndUpdateList($contactItem);
+      removeContactFromDB(contactId);
 
       deactivateNubIcon($icon);
     } else { // add contact
@@ -176,6 +204,10 @@ $(function () {
     chrome.runtime.sendMessage({ message: 'REMOVE_CONTACT_FROM_DB', fbUsername: fbUsername, contactId: contactId });
   }
 
+  function updateContactDateInDB(contactId, followupDate) {
+    chrome.runtime.sendMessage({ message: 'UPDATE_CONTACT_DATE_IN_DB', fbUsername: fbUsername, contactId: contactId, followupDate: followupDate });
+  }
+
   // removes contact node from DOM and removes lists / displays inbox zero message if necessary
   function removeContactItemAndUpdateList($contactItem) {
     var contactId = $contactItem.attr('data-contactid');
@@ -193,8 +225,14 @@ $(function () {
     if ($('.followupNowList').children().length === 0 && $('.followupLaterList').children().length === 0) {
       $('.inboxZeroMessage').removeClass('hidden');
     }
+  }
 
-    removeContactFromDB(contactId);
+  function reinsertContactItemAndUpdateList($contactItem) {
+
+  }
+
+  function updateContactFollowupDate(contactId) {
+
   }
 
   // *** SIDEBAR ***
@@ -216,6 +254,41 @@ $(function () {
       // locate this person's open nub (if indeed there is one)
       var $icon = $('a[data-contactid-nub="' + contactId + '"]');
       deactivateNubIcon($icon);
+    });
+
+    $('.followupSidebar').delegate('.followupDate', 'click', function (e) {
+      var $followupDate = $(e.target);
+      $followupDate.text('2 days');
+
+      setCaretPosition($followupDate, 1);
+
+      $followupDate.attr('contenteditable', 'true');
+      $followupDate.addClass('editing');
+      $followupDate.focus();
+    });
+
+    $('.followupSidebar').delegate('.followupDate', 'keydown', function (e) {
+      if (e.keyCode === 13) {
+        $(e.target).blur();
+      }
+    });
+
+    $('.followupSidebar').delegate('.followupDate.editing', 'blur', function (e) {
+      e.preventDefault();
+      $followupDate = $(e.target);
+      $followupDate.attr('contenteditable', 'false');
+      $followupDate.removeClass('editing');
+
+      var newFollowupDate = parseDate($followupDate.text());
+      var newFollowupDateUnix = newFollowupDate.format('x');
+      $followupDate.text(newFollowupDate.fromNow());
+
+      var $contactItem = $followupDate.parent().parent().parent().parent();
+      $contactItem.attr('data-followupdate', newFollowupDateUnix);
+      var contactId = $contactItem.attr('data-contactid');
+      updateContactDateInDB(contactId, newFollowupDateUnix);
+      removeContactItemAndUpdateList($contactItem);
+      addContactItemToSidebar($contactItem);
     });
   }
 
@@ -274,25 +347,32 @@ $(function () {
     }
   }
 
-  function addContactToSidebar(contact) {
-    var $contact = createContactElement(contact);
-    $contact.attr('data-followupdate', contact.followupDate);
-
+  function addContactItemToSidebar($contactItem) {
     $('.inboxZeroMessage').addClass('hidden');
     
-    var followUpDate = moment(contact.followupDate, 'x')
+    var followupDateUnix = $contactItem.attr('data-followupdate');
+    var followUpDate = moment(followupDateUnix, 'x')
     var endOfToday = moment({hour: 23, minute: 59, seconds: 59, milliseconds: 999});
     var isDue = followUpDate.isBefore(endOfToday);
     if (isDue) {
-      $contact.find('.followupContactName').addClass('now');
-      $contact.find('.followupDate').addClass('now');
-      $contact.addClass('now');
+      $contactItem.find('.followupContactName').addClass('now');
+      $contactItem.find('.followupDate').addClass('now');
+      $contactItem.addClass('now');
       $('.nowWrapper').removeClass('hidden');
-      appendInOrder('.followupNowList', $contact, contact.followupDate);
+      appendInOrder('.followupNowList', $contactItem, followupDateUnix);
     } else {
       $('.laterWrapper').removeClass('hidden');
-      appendInOrder('.followupLaterList', $contact, contact.followupDate);
+      $contactItem.find('.followupContactName').removeClass('now');
+      $contactItem.find('.followupDate').removeClass('now');
+      $contactItem.removeClass('now');
+      appendInOrder('.followupLaterList', $contactItem, followupDateUnix);
     }
+  }
+
+  function addContactToSidebar(contact) {
+    var $contactItem = createContactElement(contact);
+    $contactItem.attr('data-followupdate', contact.followupDate);
+    addContactItemToSidebar($contactItem);
   }
 
   function revealSidebar() {

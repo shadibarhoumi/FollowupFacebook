@@ -136,6 +136,13 @@
   vertical-align: middle;
 }
 
+.followupDate.editing {
+  background-color: #e9ebee;
+  outline: none;
+  color: red;
+  font-weight: 700;
+}
+
 .inboxZeroMessage {
   font-size: 19px;
   font-weight: bold;
@@ -144,4 +151,19 @@
   text-align: center;
   color: #888;
   margin-top: 100px;
+}
+
+.dateEntryPopup {
+  width: 100px;
+  height: 50px;
+  background: white;
+}
+
+.dateWrapper {
+  float: right;
+  line-height: 32px;
+  margin: 0 1px 0 4px;
+  text-align: right;
+  display: inline-block;
+  padding-right: 12px;
 }
