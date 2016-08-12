@@ -38,7 +38,7 @@ $(function () {
       '<div class="followupText _5qqe">Follow Up</div>',
       '<div aria-label="Followup for Facebook" class="fbChatSidebarBody followupSidebar" role="complementary" style="height: 100%;">',
        '<h3 class="accessible_elem">Followup for Facebook</h3>',
-       '<div class="uiScrollableArea scrollableOrderedList _5qmw fade contentAfter" style="width:252px;" id="u_0_2q">',
+       '<div class="uiScrollableArea scrollableOrderedList _5qmw fade contentAfter" style="width:252px;">',
           '<div class="uiScrollableAreaWrap scrollable" aria-label="Scrollable region" role="group" tabindex="0">',
              '<div class="uiScrollableAreaBody" style="width:205px;">',
                 '<div class="uiScrollableAreaContent">',
@@ -227,14 +227,6 @@ $(function () {
     }
   }
 
-  function reinsertContactItemAndUpdateList($contactItem) {
-
-  }
-
-  function updateContactFollowupDate(contactId) {
-
-  }
-
   // *** SIDEBAR ***
   // shift facebook contents left to make room for sidebar
   function makeRoomForSidebar() {
@@ -280,7 +272,7 @@ $(function () {
       $followupDate.removeClass('editing');
 
       var newFollowupDate = parseDate($followupDate.text());
-      var newFollowupDateUnix = newFollowupDate.format('x');
+      var newFollowupDateUnix = parseInt(newFollowupDate.format('x'));
       $followupDate.text(newFollowupDate.fromNow());
 
       var $contactItem = $followupDate.parent().parent().parent().parent();
