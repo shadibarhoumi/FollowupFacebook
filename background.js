@@ -20,7 +20,7 @@ function addToFollowup(fbUsername, contact, sendResponse) {
 }
 
 function sendContactToView(contact) {
-  chrome.tabs.query({ active: true }, function (tabs) {
+  chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
     chrome.tabs.sendMessage(tabs[0].id, { message: 'RECEIVED_CONTACT_FROM_DB', contact: contact });
   });
 }
@@ -67,7 +67,7 @@ function checkFollowupsDue(fbUsername, sendResponse) {
     if (isDue) {
       sendResponse({ followupsDue: true });
     }
-  }); 
+  });
 }
 
 function updateContactDate(fbUsername, contactId, followupDate) {
@@ -81,7 +81,7 @@ chrome.runtime.onMessage.addListener(
     if (request.message === 'ADD_CONTACT_TO_DB') {
       addToFollowup(request.fbUsername, request.contact, sendResponse);
     } else if (request.message === 'FETCH_CONTACTS_FROM_DB') {
-        registerContactListener(request.fbUsername);
+      registerContactListener(request.fbUsername);
     } else if (request.message === 'REMOVE_CONTACT_FROM_DB') {
       removeFromFollowup(request.fbUsername, request.contactId);
     } else if (request.message === 'DOES_CONTACT_EXIST') {

@@ -19,7 +19,7 @@ $(function () {
   const followupContactTemplateString = [
     '<li class="followupContactItem _42fz">',
        '<div class="followupContactLink">',
-          '<a class="followupCloseButton" href="#">&times;</a>',
+          '<a class="followupCloseButton closeButton" href="#">&times;</a>',
           '<div class="_55lp">',
              '<div class="dateWrapper">',
                '<div class="followupDate"></div>',
@@ -31,35 +31,34 @@ $(function () {
     '</li>',
   ].join('\n');
 
+  // sidebar nub
+  const sidebarNubTemplateString = [
+    '<div class="sidebarNub">',
+      '<div class="_5qqe"></div>',
+      '<a class="sidebarOpenButton" href="#">&#x21E8;</a>',
+    '</div>',
+  ].join('\n');
+
   // sidebar
   const sidebarTemplateString = [
     '<div class="followupSidebarContainer">',
-      '<div class="_5qqe"></div>',
-      '<div class="followupText _5qqe">Follow Up</div>',
-      '<div aria-label="Followup for Facebook" class="fbChatSidebarBody followupSidebar" role="complementary" style="height: 100%;">',
-       '<h3 class="accessible_elem">Followup for Facebook</h3>',
-       '<div class="uiScrollableArea scrollableOrderedList _5qmw fade contentAfter" style="width:252px;">',
-          '<div class="uiScrollableAreaWrap scrollable" aria-label="Scrollable region" role="group" tabindex="0">',
-             '<div class="uiScrollableAreaBody" style="width:205px;">',
-                '<div class="uiScrollableAreaContent">',
-                   '<div>',
-                      '<div class="fbChatOrderedList clearfix">',
-                        '<div class="nowWrapper hidden">',
-                          '<div class="followupHeading now">Today</div>',
-                          '<ul class="followupNowList"></ul>',
-                        '</div>',
-                        '<div class="laterWrapper hidden">',
-                          '<div class="followupHeading later">Later</div>',
-                          '<ul class="followupLaterList"></ul>',
-                        '</div>',
-                      '</div>',
-                      '<div class="inboxZeroMessage">Inbox Zero!</div>',
-                   '</div>',
-                '</div>',
-             '</div>',
-          '</div>',
-        '</div>',
+      '<div class="followupText">',
+        '<span>Follow Up</span>',
+        '<a class="sidebarCloseButton closeButton" href="#">&times;</a>',
       '</div>',
+         '<div class="followupScrollable">',
+            '<div class="fbChatOrderedList clearfix">',
+              '<div class="nowWrapper hidden">',
+                '<div class="followupHeading now">Today</div>',
+                '<ul class="followupNowList"></ul>',
+              '</div>',
+              '<div class="laterWrapper hidden">',
+                '<div class="followupHeading later">Later</div>',
+                '<ul class="followupLaterList"></ul>',
+              '</div>',
+            '</div>',
+            '<div class="inboxZeroMessage">Inbox Zero!</div>',
+         '</div>',
     '</div>',
   ].join('\n');
 
@@ -101,7 +100,7 @@ $(function () {
 
   // get the username after the '/' character in the profile url
   var fbUsername = formatUsername(fbProfileURL.split('/').pop());
-  
+
 
   // has the sidebar been loaded for the first time
   var sidebarLoaded = false;
@@ -123,7 +122,7 @@ $(function () {
     var $titlebar = $nub.find('.titlebarButtonWrapper').first();
     var $iconWrapper = $(iconTemplateString).prependTo($titlebar);
     var $iconLink = $iconWrapper.children('a').first();
-    
+
     doesContactExist(fbUsername, contactName, function(response) {
       if (response.exists) {
         $iconLink.addClass('active');
@@ -169,7 +168,7 @@ $(function () {
     if ($icon.hasClass('active')) { // remove contact
       var contactId = $icon.attr('data-contactid-nub');
       var $contactItem = $('.followupContactItem[data-contactid="' + contactId + '"]');
-      
+
       removeContactItemAndUpdateList($contactItem);
       removeContactFromDB(contactId);
 
@@ -211,7 +210,7 @@ $(function () {
   // removes contact node from DOM and removes lists / displays inbox zero message if necessary
   function removeContactItemAndUpdateList($contactItem) {
     var contactId = $contactItem.attr('data-contactid');
-    
+
     var $list = $contactItem.parent();
     var $listWrapper = $contactItem.parent().parent();
     $contactItem.remove();
@@ -229,20 +228,30 @@ $(function () {
 
   // *** SIDEBAR ***
   // shift facebook contents left to make room for sidebar
-  function makeRoomForSidebar() {
-    $('body').addClass('shiftBody');
-    $('.fbChatSidebar').addClass('shiftFbChatSidebar');
-    $('.fbDockWrapperRight').addClass('shiftFbDockWrapper');
+  function configureFacebookForAddSidebar() {
+    $('._21dp').addClass('zBoost');
   }
 
   function bindSidebarEvents() {
+    $('.sidebarNub').delegate('a.sidebarOpenButton', 'click', function(e) {
+      if (!sidebarOpen) {
+        openSidebar();
+      }
+    });
+
+    $('.followupSidebarContainer').delegate('a.sidebarCloseButton', 'click', function (e) {
+      if (sidebarOpen) {
+        closeSidebar();
+      }
+    });
+
     $('.followupSidebar').delegate('a.followupCloseButton', 'click', function (e) {
       var $contactItem = $(this).parent().parent();
       var contactId = $contactItem.attr('data-contactid');
 
-      // remove item from list 
+      // remove item from list
       removeContactItemAndUpdateList($contactItem);
-      
+
       // locate this person's open nub (if indeed there is one)
       var $icon = $('a[data-contactid-nub="' + contactId + '"]');
       deactivateNubIcon($icon);
@@ -290,17 +299,17 @@ $(function () {
     var $fbChatSidebarContainer = $('#pagelet_sidebar');
 
     var $sidebar = $(sidebarTemplateString);
+    var $sidebarNub = $(sidebarNubTemplateString);
 
     // $sidebar.insertAfter($fbChatSidebar);
     $sidebar.insertAfter($fbChatSidebarContainer);
+    $sidebarNub.insertAfter($fbChatSidebarContainer);
 
     bindSidebarEvents();
   }
 
-  function removeRoomForSidebar() {
-    $('body').removeClass('shiftBody');
-    $('.fbChatSidebar').removeClass('shiftFbChatSidebar');
-    $('.fbDockWrapperRight').removeClass('shiftFbDockWrapper');
+  function configureFacebookForRemoveSidebar() {
+    $('._21dp').removeClass('zBoost');
   }
 
   function hideSidebar() {
@@ -335,13 +344,13 @@ $(function () {
     });
 
     if (!inserted) { // element is largest or list is empty
-      $list.append($contact);  
+      $list.append($contact);
     }
   }
 
   function addContactItemToSidebar($contactItem) {
     $('.inboxZeroMessage').addClass('hidden');
-    
+
     var followupDateUnix = $contactItem.attr('data-followupdate');
     var followUpDate = moment(followupDateUnix, 'x')
     var endOfToday = moment({hour: 23, minute: 59, seconds: 59, milliseconds: 999});
@@ -378,7 +387,8 @@ $(function () {
 
   function openSidebar() {
     if (!sidebarOpen) {
-      makeRoomForSidebar();
+      // disabled to prevent screwing up chat nub layout
+      configureFacebookForAddSidebar();
       if (sidebarLoaded) {
         revealSidebar();
       } else {
@@ -391,7 +401,7 @@ $(function () {
 
   function closeSidebar() {
     if (sidebarOpen) {
-      removeRoomForSidebar();
+      configureFacebookForRemoveSidebar();
       hideSidebar();
       sidebarOpen = false;
     }

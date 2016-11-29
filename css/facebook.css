@@ -26,26 +26,38 @@
   right: 459px !important;
 }
 
-.followupSidebar {
-  position: relative;
-  top: 0;
-  right: 0;
+.followupNowList {
+  /*height: 400px;
+  overflow: scroll;*/
 }
 
 .followupSidebarContainer {
-  z-index: 300;
+  z-index: 301;
   box-shadow: 1px 0 0 #f0f0f2 inset;
   background-color: #e9ebee;
-  border-left-color: #ccc;
-  border-left: 1px solid rgba(0, 0, 0, .4);
+  border-right-color: #ccc;
+  border-right: 1px solid rgba(0, 0, 0, .4);
   position: fixed;
-  right: 0;
+  left: 0;
   top: 0;
   height: 100%;
+
+  width: 252px;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.followupScrollable {
+  overflow: scroll;
+}
+
+.fbChatOrderedList {
+  z-index: 301;
 }
 
 .followupContactItem {
-  width: 250px;
+  width: 252px;
 }
 
 .followupContactLink {
@@ -70,7 +82,7 @@
   color: #656565;
   width: 250px;
   text-align: center;
-  line-height: 43px;
+  padding-top: 52px;
 }
 
 .followupHeading {
@@ -109,6 +121,9 @@
   position: absolute;
   top: 10px;
   left: 10px;
+}
+
+.closeButton {
   z-index: 1;
   font-size: 20px;
   font-weight: bold;
@@ -120,7 +135,7 @@
   text-decoration: none;
 }
 
-.followupCloseButton:hover {
+.closeButton:hover {
   color: #000000;
   text-decoration: none;
   opacity: 0.4;
@@ -166,4 +181,35 @@
   text-align: right;
   display: inline-block;
   padding-right: 12px;
+}
+
+.sidebarNub {
+  z-index: 299;
+  box-shadow: 1px 0 0 #f0f0f2 inset;
+  background-color: #e9ebee;
+  position: fixed;
+  left: 0;
+  top: 0;
+  background-color: transparent;
+}
+
+.sidebarOpenButton {
+  font-size: 40px;
+  color: red;
+}
+
+.sidebarCloseButton {
+  position: absolute;
+  right: 10px;
+  top: 48px;
+}
+
+.sidebarOpenButton:hover {
+  color: #851717;
+  text-decoration: none;
+}
+
+.zBoost {
+  position: relative;
+  z-index: 305 !important;
 }
